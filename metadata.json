@@ -1,0 +1,6 @@
+{
+  "name": "Pencatatan Bongkar Buah & Upah",
+  "description": "Pencatatan simpel data bungkaran buah dengan kode per mobil dan sistem upah per mobil.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
