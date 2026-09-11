@@ -61,7 +61,7 @@ export default function App() {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
+        if (Array.isArray(parsed)) {
           return parsed;
         }
       }
@@ -77,7 +77,7 @@ export default function App() {
       const saved = localStorage.getItem(ORDERS_STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
+        if (Array.isArray(parsed)) {
           return parsed;
         }
       }
@@ -138,13 +138,11 @@ export default function App() {
     return () => unsub();
   }, []);
 
-  // 1. Subscribe to real-time bungkaran records
+  // 1. Subscribe to real-time bungkaran records (propagates immediately to Viewer & Admin)
   useEffect(() => {
     const unsubscribe = subscribeToRecords(
       (cloudRecords) => {
-        if (cloudRecords && cloudRecords.length > 0) {
-          setRecords(cloudRecords);
-        }
+        setRecords(cloudRecords);
         setIsRealtimeConnected(true);
       },
       (err) => {
@@ -158,13 +156,12 @@ export default function App() {
     };
   }, []);
 
-  // 2. Subscribe to real-time fruit orders
+  // 2. Subscribe to real-time fruit orders (propagates immediately to Viewer & Admin)
   useEffect(() => {
     const unsubscribe = subscribeToFruitOrders(
       (cloudOrders) => {
-        if (cloudOrders && cloudOrders.length > 0) {
-          setFruitOrders(cloudOrders);
-        }
+        setFruitOrders(cloudOrders);
+        setIsRealtimeConnected(true);
       },
       (err) => {
         console.warn('Realtime fruit orders subscription offline/failed:', err);
@@ -176,11 +173,11 @@ export default function App() {
     };
   }, []);
 
-  // 3. Subscribe to real-time fruit stock inventory
+  // 3. Subscribe to real-time fruit stock inventory (propagates immediately to Viewer & Admin)
   useEffect(() => {
     const unsubscribe = subscribeToFruitStock(
       (cloudStocks) => {
-        if (cloudStocks && Object.keys(cloudStocks).length > 0) {
+        if (cloudStocks && typeof cloudStocks === 'object') {
           setStocks(cloudStocks);
         }
       },

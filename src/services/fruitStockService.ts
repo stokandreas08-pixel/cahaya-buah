@@ -1,10 +1,22 @@
 import { doc, onSnapshot, setDoc, getDoc } from 'firebase/firestore';
-import { db } from './firebase';
+import { db, sanitizeFirestoreData } from './firebase';
 import { StockMap } from '../types';
 import { initialFruitStock } from '../data/fruitCatalog';
 
 const COLLECTION_NAME = 'fruit_stocks';
 const DOC_ID = 'inventory';
+
+/**
+ * Clean and ensure all stock values are valid numbers (supports negative numbers)
+ */
+function cleanStockMap(raw: StockMap): Record<string, number> {
+  const result: Record<string, number> = {};
+  for (const [key, val] of Object.entries(raw)) {
+    const num = Number(val);
+    result[key] = isNaN(num) ? 0 : Math.round(num);
+  }
+  return result;
+}
 
 /**
  * Subscribe to real-time fruit stock changes from Firestore
@@ -27,8 +39,8 @@ export function subscribeToFruitStock(
         }
 
         const data = snapshot.data();
-        if (data && data.stocks) {
-          onData(data.stocks as StockMap);
+        if (data && data.stocks && typeof data.stocks === 'object') {
+          onData(cleanStockMap(data.stocks as StockMap));
         } else {
           onData(initialFruitStock);
         }
@@ -54,7 +66,7 @@ export async function seedInitialFruitStock(stocks: StockMap) {
     const snap = await getDoc(docRef);
     if (!snap.exists()) {
       await setDoc(docRef, {
-        stocks,
+        stocks: cleanStockMap(stocks),
         updatedAt: new Date().toISOString(),
       });
       console.log('Seeded initial fruit stock to Firestore');
@@ -72,10 +84,10 @@ export async function updateFruitStockInCloud(stockKey: string, newStock: number
   const snap = await getDoc(docRef);
   const currentStocks: StockMap = snap.exists() && snap.data()?.stocks ? snap.data()!.stocks : { ...initialFruitStock };
 
-  currentStocks[stockKey] = Math.floor(newStock);
+  currentStocks[stockKey] = Math.round(Number(newStock) || 0);
 
   await setDoc(docRef, {
-    stocks: currentStocks,
+    stocks: cleanStockMap(currentStocks),
     updatedAt: new Date().toISOString(),
   }, { merge: true });
 }
@@ -85,8 +97,9 @@ export async function updateFruitStockInCloud(stockKey: string, newStock: number
  */
 export async function saveAllStocksToCloud(newStocks: StockMap): Promise<void> {
   const docRef = doc(db, COLLECTION_NAME, DOC_ID);
-  await setDoc(docRef, {
-    stocks: newStocks,
+  const sanitized = cleanStockMap(newStocks);
+  await setDoc(docRef, sanitizeFirestoreData({
+    stocks: sanitized,
     updatedAt: new Date().toISOString(),
-  }, { merge: true });
+  }), { merge: true });
 }

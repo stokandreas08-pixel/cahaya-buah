@@ -5,11 +5,9 @@ import {
   setDoc, 
   updateDoc, 
   deleteDoc, 
-  getDocs,
-  query, 
-  orderBy 
+  getDocs 
 } from 'firebase/firestore';
-import { db } from './firebase';
+import { db, sanitizeFirestoreData } from './firebase';
 import { CarUnloadingRecord, PaymentStatus } from '../types';
 import { initialRecords } from '../data/initialData';
 
@@ -24,13 +22,12 @@ export function subscribeToRecords(
 ) {
   try {
     const colRef = collection(db, COLLECTION_NAME);
-    const q = query(colRef, orderBy('createdAt', 'desc'));
 
     return onSnapshot(
-      q,
+      colRef,
       (snapshot) => {
         if (snapshot.empty) {
-          // If Firestore collection is empty, seed with initial records
+          // If Firestore collection is empty on first boot, seed with initial records
           seedInitialRecords(initialRecords);
           onData(initialRecords);
           return;
@@ -42,12 +39,21 @@ export function subscribeToRecords(
           items.push({
             ...data,
             id: docSnap.id,
+            workerNames: Array.isArray(data.workerNames) ? data.workerNames : ['Umum'],
           });
         });
+
+        // Sort descending by date/time or createdAt
+        items.sort((a, b) => {
+          const timeA = new Date(a.createdAt || `${a.date}T${a.time || '00:00'}`).getTime();
+          const timeB = new Date(b.createdAt || `${b.date}T${b.time || '00:00'}`).getTime();
+          return timeB - timeA;
+        });
+
         onData(items);
       },
       (error) => {
-        console.warn('Firestore subscription error (using local fallback):', error);
+        console.warn('Firestore bungkaran subscription error:', error);
         if (onError) onError(error);
       }
     );
@@ -68,7 +74,14 @@ export async function seedInitialRecords(records: CarUnloadingRecord[]) {
     if (!existingSnap.empty) return;
 
     for (const rec of records) {
-      await setDoc(doc(db, COLLECTION_NAME, rec.id), rec);
+      const clean = sanitizeFirestoreData({
+        ...rec,
+        notes: rec.notes || '',
+        workerTeam: rec.workerTeam || '',
+        ratePerPackage: rec.ratePerPackage ?? 0,
+        createdAt: rec.createdAt || new Date().toISOString(),
+      });
+      await setDoc(doc(db, COLLECTION_NAME, rec.id), clean);
     }
     console.log('Seeded initial bungkaran records to Firestore');
   } catch (e) {
@@ -81,7 +94,15 @@ export async function seedInitialRecords(records: CarUnloadingRecord[]) {
  */
 export async function addRecordToCloud(record: CarUnloadingRecord): Promise<void> {
   const docRef = doc(db, COLLECTION_NAME, record.id);
-  await setDoc(docRef, record);
+  const clean = sanitizeFirestoreData({
+    ...record,
+    notes: record.notes || '',
+    workerTeam: record.workerTeam || '',
+    ratePerPackage: record.ratePerPackage ?? 0,
+    wageMethod: record.wageMethod || 'langsung',
+    createdAt: record.createdAt || new Date().toISOString(),
+  });
+  await setDoc(docRef, clean);
 }
 
 /**
@@ -89,7 +110,14 @@ export async function addRecordToCloud(record: CarUnloadingRecord): Promise<void
  */
 export async function updateRecordInCloud(record: CarUnloadingRecord): Promise<void> {
   const docRef = doc(db, COLLECTION_NAME, record.id);
-  await updateDoc(docRef, { ...record });
+  const clean = sanitizeFirestoreData({
+    ...record,
+    notes: record.notes || '',
+    workerTeam: record.workerTeam || '',
+    ratePerPackage: record.ratePerPackage ?? 0,
+    wageMethod: record.wageMethod || 'langsung',
+  });
+  await setDoc(docRef, clean, { merge: true });
 }
 
 /**

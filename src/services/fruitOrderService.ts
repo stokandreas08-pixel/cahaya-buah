@@ -5,11 +5,9 @@ import {
   setDoc, 
   updateDoc, 
   deleteDoc, 
-  getDocs,
-  query, 
-  orderBy 
+  getDocs 
 } from 'firebase/firestore';
-import { db } from './firebase';
+import { db, sanitizeFirestoreData } from './firebase';
 import { FruitOrder, OrderStatus } from '../types';
 import { initialFruitOrders } from '../data/fruitCatalog';
 
@@ -24,13 +22,12 @@ export function subscribeToFruitOrders(
 ) {
   try {
     const colRef = collection(db, COLLECTION_NAME);
-    const q = query(colRef, orderBy('createdAt', 'desc'));
 
     return onSnapshot(
-      q,
+      colRef,
       (snapshot) => {
         if (snapshot.empty) {
-          // If Firestore collection is empty, seed initial sample orders
+          // If Firestore collection is empty on first boot, seed initial sample orders
           seedInitialFruitOrders(initialFruitOrders);
           onData(initialFruitOrders);
           return;
@@ -42,8 +39,19 @@ export function subscribeToFruitOrders(
           items.push({
             ...data,
             id: docSnap.id,
+            items: Array.isArray(data.items) ? data.items : [],
+            customerPhone: data.customerPhone || undefined,
+            notes: data.notes || undefined,
           });
         });
+
+        // Sort descending by date/time or createdAt
+        items.sort((a, b) => {
+          const timeA = new Date(a.createdAt || `${a.date}T${a.time || '00:00'}`).getTime();
+          const timeB = new Date(b.createdAt || `${b.date}T${b.time || '00:00'}`).getTime();
+          return timeB - timeA;
+        });
+
         onData(items);
       },
       (error) => {
@@ -68,7 +76,13 @@ export async function seedInitialFruitOrders(orders: FruitOrder[]) {
     if (!existingSnap.empty) return;
 
     for (const ord of orders) {
-      await setDoc(doc(db, COLLECTION_NAME, ord.id), ord);
+      const clean = sanitizeFirestoreData({
+        ...ord,
+        customerPhone: ord.customerPhone || '',
+        notes: ord.notes || '',
+        createdAt: ord.createdAt || new Date().toISOString(),
+      });
+      await setDoc(doc(db, COLLECTION_NAME, ord.id), clean);
     }
     console.log('Seeded initial fruit orders to Firestore');
   } catch (e) {
@@ -77,23 +91,34 @@ export async function seedInitialFruitOrders(orders: FruitOrder[]) {
 }
 
 /**
- * Add a new fruit order
+ * Add a new fruit order to Firestore
  */
 export async function addFruitOrderToCloud(order: FruitOrder): Promise<void> {
   const docRef = doc(db, COLLECTION_NAME, order.id);
-  await setDoc(docRef, order);
+  const clean = sanitizeFirestoreData({
+    ...order,
+    customerPhone: order.customerPhone || '',
+    notes: order.notes || '',
+    createdAt: order.createdAt || new Date().toISOString(),
+  });
+  await setDoc(docRef, clean);
 }
 
 /**
- * Update an existing fruit order
+ * Update an existing fruit order in Firestore
  */
 export async function updateFruitOrderInCloud(order: FruitOrder): Promise<void> {
   const docRef = doc(db, COLLECTION_NAME, order.id);
-  await updateDoc(docRef, { ...order });
+  const clean = sanitizeFirestoreData({
+    ...order,
+    customerPhone: order.customerPhone || '',
+    notes: order.notes || '',
+  });
+  await setDoc(docRef, clean, { merge: true });
 }
 
 /**
- * Delete a fruit order
+ * Delete a fruit order from Firestore
  */
 export async function deleteFruitOrderFromCloud(id: string): Promise<void> {
   const docRef = doc(db, COLLECTION_NAME, id);
