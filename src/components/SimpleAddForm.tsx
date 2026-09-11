@@ -1,18 +1,22 @@
 import React, { useState } from 'react';
-import { Plus, Check, Calculator, Users, X } from 'lucide-react';
+import { Plus, Check, Calculator, Users, X, Radio, Lock, ShieldCheck } from 'lucide-react';
 import { CarUnloadingRecord, PaymentStatus } from '../types';
 import { formatRupiah } from '../utils/formatters';
 
 interface SimpleAddFormProps {
   onAdd: (record: CarUnloadingRecord) => void;
-  existingCodes: string[];
-  existingWorkers: string[];
+  existingCodes?: string[];
+  existingWorkers?: string[];
+  isAdmin: boolean;
+  onPromptLogin: () => void;
 }
 
 export const SimpleAddForm: React.FC<SimpleAddFormProps> = ({ 
   onAdd, 
-  existingCodes,
-  existingWorkers 
+  existingCodes = [],
+  existingWorkers = [],
+  isAdmin,
+  onPromptLogin,
 }) => {
   const [packagingCode, setPackagingCode] = useState('');
   const [packageCount, setPackageCount] = useState<string>('100');
@@ -28,7 +32,7 @@ export const SimpleAddForm: React.FC<SimpleAddFormProps> = ({
 
   // Default suggested worker names
   const defaultWorkerSuggestions = Array.from(
-    new Set([...existingWorkers, 'Slamet', 'Joko', 'Anto', 'Budi', 'Udin', 'Herman', 'Asep'])
+    new Set([...(Array.isArray(existingWorkers) ? existingWorkers : []), 'Slamet', 'Joko', 'Anto', 'Budi', 'Udin', 'Herman', 'Asep'])
   );
 
   // If calculating by rate x count
@@ -116,19 +120,63 @@ export const SimpleAddForm: React.FC<SimpleAddFormProps> = ({
     'apel 01',
   ];
 
+  if (!isAdmin) {
+    return (
+      <div className="bg-gradient-to-r from-emerald-50 via-teal-50 to-slate-50 p-5 rounded-2xl border border-emerald-200/80 shadow-xs mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex items-start space-x-3.5">
+          <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs mt-0.5">
+            <Radio className="w-5 h-5 animate-pulse" />
+          </div>
+          <div>
+            <div className="flex items-center space-x-2">
+              <h2 className="text-sm sm:text-base font-bold text-slate-900">
+                Mode Klien / Viewer (Live Real-Time Aktif)
+              </h2>
+              <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span>
+                <span>Sinkron Otomatis</span>
+              </span>
+            </div>
+            <p className="text-xs text-slate-600 mt-1 leading-relaxed max-w-2xl">
+              Halaman ini akan <strong>otomatis ter-update sendiri</strong> setiap kali Admin menambahkan bungkaran baru, mengubah data, atau menghapus bungkaran tanpa perlu refresh halaman.
+            </p>
+          </div>
+        </div>
+
+        <button
+          id="btn-prompt-login-form"
+          type="button"
+          onClick={onPromptLogin}
+          className="shrink-0 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl flex items-center space-x-2 shadow-xs transition-all cursor-pointer"
+        >
+          <Lock className="w-3.5 h-3.5" />
+          <span>Login Admin untuk Input</span>
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs mb-6">
+    <div id="simple-add-form" className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs mb-6">
       <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-100">
         <div className="flex items-center space-x-2">
           <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-xs">
             <Plus className="w-4 h-4" />
           </div>
-          <h2 className="text-sm sm:text-base font-bold text-slate-900">
-            Catat Pembongkaran Mobil & Upah
-          </h2>
+          <div>
+            <div className="flex items-center space-x-2">
+              <h2 className="text-sm sm:text-base font-bold text-slate-900">
+                Catat Pembongkaran Mobil & Upah
+              </h2>
+              <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                <ShieldCheck className="w-3 h-3 text-emerald-700" />
+                <span>Admin Aktif</span>
+              </span>
+            </div>
+          </div>
         </div>
         <span className="text-xs text-slate-500 hidden sm:inline">
-          Cukup isi kode bungkaran, jumlah, upah mobil, & nama pembungkar
+          Data langsung tersimpan di Cloud & otomatis muncul di semua layar klien
         </span>
       </div>
 

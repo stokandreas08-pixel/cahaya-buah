@@ -16,3 +16,41 @@ export interface CarUnloadingRecord {
   notes?: string;
   createdAt: string;
 }
+
+export type FruitType = 'jeruk_gina' | 'jeruk_faisal' | 'salak' | 'naga';
+
+export type OrderStatus = 'menunggu' | 'diproses' | 'selesai' | 'dibatalkan';
+
+export interface OrderItem {
+  id: string;
+  fruitType: FruitType;
+  fruitName: string; // "Jeruk Gina", "Jeruk Faisal", "Salak", "Buah Naga"
+  size: string; // "AB", "C", "DTOP", "DR", "DK", "A", "B", "Standar"
+  petiCount: number; // Jumlah Peti
+}
+
+export interface FruitOrder {
+  id: string;
+  orderNumber: string; // e.g. "ORD-001"
+  customerName: string; // Nama Pemesan / Pembeli
+  customerPhone?: string;
+  date: string; // YYYY-MM-DD
+  time: string; // HH:mm
+  items: OrderItem[];
+  totalPeti: number; // Total peti dari semua item
+  status: OrderStatus;
+  notes?: string;
+  createdAt: string;
+}
+
+export interface FruitCatalogItem {
+  id: FruitType;
+  name: string;
+  shortName: string;
+  sizes: string[];
+  description: string;
+  colorBadge: string;
+  icon: string;
+}
+
+export type StockMap = Record<string, number>; // e.g. "jeruk_gina__AB": 50

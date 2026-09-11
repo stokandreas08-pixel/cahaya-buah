@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Search, Printer, Edit2, Trash2, X } from 'lucide-react';
+import { Search, Printer, Edit2, Trash2, X, Lock } from 'lucide-react';
 import { CarUnloadingRecord, PaymentStatus } from '../types';
 import { formatRupiah, formatNumber, formatDateIndo } from '../utils/formatters';
 
@@ -9,6 +9,8 @@ interface RecordListProps {
   onPrint: (record: CarUnloadingRecord) => void;
   onDelete: (id: string) => void;
   onToggleStatus: (id: string) => void;
+  isAdmin: boolean;
+  onPromptLogin: () => void;
 }
 
 export const RecordList: React.FC<RecordListProps> = ({
@@ -17,6 +19,8 @@ export const RecordList: React.FC<RecordListProps> = ({
   onPrint,
   onDelete,
   onToggleStatus,
+  isAdmin,
+  onPromptLogin,
 }) => {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | PaymentStatus>('all');
@@ -224,17 +228,29 @@ export const RecordList: React.FC<RecordListProps> = ({
                       </div>
                     </td>
 
-                    {/* Status Upah (Klik untuk toggle) */}
+                    {/* Status Upah (Klik untuk toggle bila Admin) */}
                     <td className="py-3 px-4 text-center">
                       <button
                         type="button"
-                        onClick={() => onToggleStatus(item.id)}
-                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold transition-all shadow-2xs cursor-pointer ${
+                        onClick={() => {
+                          if (isAdmin) {
+                            onToggleStatus(item.id);
+                          } else {
+                            onPromptLogin();
+                          }
+                        }}
+                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold transition-all shadow-2xs ${
+                          isAdmin ? 'cursor-pointer' : 'cursor-pointer opacity-90'
+                        } ${
                           item.paymentStatus === 'lunas'
                             ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
                             : 'bg-amber-100 text-amber-800 hover:bg-amber-200'
                         }`}
-                        title="Klik untuk ubah status Lunas/Belum"
+                        title={
+                          isAdmin
+                            ? 'Klik untuk ubah status Lunas/Belum'
+                            : 'Status upah bungkaran. Login admin untuk mengubah status.'
+                        }
                       >
                         {item.paymentStatus === 'lunas' ? '✓ LUNAS' : 'BELUM DIBAYAR'}
                       </button>
@@ -243,6 +259,7 @@ export const RecordList: React.FC<RecordListProps> = ({
                     {/* Aksi */}
                     <td className="py-3 px-4 text-center">
                       <div className="flex items-center justify-center space-x-1">
+                        {/* Cetak Slip Kwitansi (Bisa diakses siapa saja baik Client maupun Admin) */}
                         <button
                           type="button"
                           onClick={() => onPrint(item)}
@@ -251,23 +268,45 @@ export const RecordList: React.FC<RecordListProps> = ({
                         >
                           <Printer className="w-4 h-4" />
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => onEdit(item)}
-                          className="p-1.5 text-slate-500 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
-                          title="Edit Data & Nama Pembungkar"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </button>
+
+                        {/* Edit Data */}
                         <button
                           type="button"
                           onClick={() => {
-                            if (confirm(`Hapus data ${item.packagingCode}?`)) {
-                              onDelete(item.id);
+                            if (isAdmin) {
+                              onEdit(item);
+                            } else {
+                              onPromptLogin();
                             }
                           }}
-                          className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                          title="Hapus Data"
+                          className={`p-1.5 rounded-lg transition-colors ${
+                            isAdmin
+                              ? 'text-slate-500 hover:text-blue-700 hover:bg-blue-50'
+                              : 'text-slate-300 hover:text-slate-500 hover:bg-slate-100'
+                          }`}
+                          title={isAdmin ? 'Edit Data & Nama Pembungkar' : 'Hanya Admin yang dapat mengedit (Klik untuk Login)'}
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+
+                        {/* Hapus Data */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (isAdmin) {
+                              if (confirm(`Hapus data bungkaran ${item.packagingCode}?`)) {
+                                onDelete(item.id);
+                              }
+                            } else {
+                              onPromptLogin();
+                            }
+                          }}
+                          className={`p-1.5 rounded-lg transition-colors ${
+                            isAdmin
+                              ? 'text-slate-400 hover:text-rose-600 hover:bg-rose-50'
+                              : 'text-slate-300 hover:text-slate-500 hover:bg-slate-100'
+                          }`}
+                          title={isAdmin ? 'Hapus Data Bungkaran' : 'Hanya Admin yang dapat menghapus (Klik untuk Login)'}
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
