@@ -339,7 +339,7 @@ export const SimpleAddForm: React.FC<SimpleAddFormProps> = ({
             ))}
 
             {/* Input to type new worker name */}
-            <div className="inline-flex items-center space-x-1">
+            <div className="flex items-center space-x-1.5 w-full sm:w-auto mt-1 sm:mt-0">
               <input
                 id="input-worker-name"
                 type="text"
@@ -352,12 +352,12 @@ export const SimpleAddForm: React.FC<SimpleAddFormProps> = ({
                     handleAddWorker(newWorkerInput);
                   }
                 }}
-                className="px-2.5 py-1 text-xs bg-white border border-slate-300 rounded-lg focus:ring-1 focus:ring-emerald-500 w-44 placeholder:text-slate-400"
+                className="flex-1 sm:w-48 px-3 py-2 sm:py-1.5 text-sm sm:text-xs bg-white border border-slate-300 rounded-lg focus:ring-1 focus:ring-emerald-500 placeholder:text-slate-400"
               />
               <button
                 type="button"
                 onClick={() => handleAddWorker(newWorkerInput)}
-                className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-colors"
+                className="px-3 py-2 sm:py-1.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white rounded-lg text-xs font-bold transition-colors shrink-0 cursor-pointer"
               >
                 + Tambah
               </button>

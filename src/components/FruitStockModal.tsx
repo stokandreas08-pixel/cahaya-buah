@@ -158,7 +158,7 @@ export const FruitStockModal: React.FC<FruitStockModalProps> = ({
                             <button
                               type="button"
                               onClick={() => handleAdjust(cat.id, sz, -5)}
-                              className="w-6 h-6 flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-xs font-black cursor-pointer"
+                              className="w-7 h-7 sm:w-6 sm:h-6 flex items-center justify-center bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-800 rounded text-xs font-black cursor-pointer shrink-0"
                               title="-5 Peti"
                             >
                               -
@@ -169,7 +169,7 @@ export const FruitStockModal: React.FC<FruitStockModalProps> = ({
                               onChange={(e) =>
                                 handleStockChange(cat.id, sz, Number(e.target.value))
                               }
-                              className={`w-full text-center font-black text-xs py-1 border rounded focus:ring-1 focus:ring-amber-500 ${
+                              className={`w-full text-center font-black text-xs py-1.5 sm:py-1 border rounded focus:ring-1 focus:ring-amber-500 ${
                                 currentVal < 0
                                   ? 'border-rose-400 bg-rose-50 text-rose-700'
                                   : 'border-slate-300'
@@ -178,7 +178,7 @@ export const FruitStockModal: React.FC<FruitStockModalProps> = ({
                             <button
                               type="button"
                               onClick={() => handleAdjust(cat.id, sz, 5)}
-                              className="w-6 h-6 flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-xs font-black cursor-pointer"
+                              className="w-7 h-7 sm:w-6 sm:h-6 flex items-center justify-center bg-amber-100 hover:bg-amber-200 active:bg-amber-300 text-amber-900 rounded text-xs font-black cursor-pointer shrink-0"
                               title="+5 Peti"
                             >
                               +

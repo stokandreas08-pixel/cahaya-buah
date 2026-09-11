@@ -336,22 +336,40 @@ export const EditFruitOrderModal: React.FC<EditFruitOrderModalProps> = ({
                         </select>
                       </div>
 
-                      {/* Jumlah Peti */}
+                      {/* Jumlah Peti with mobile-friendly steppers */}
                       <div className="sm:col-span-3">
                         <label className="block text-[10px] font-bold text-slate-500 mb-1">
                           Jumlah Peti
                         </label>
-                        <div className="relative">
+                        <div className="flex items-center space-x-1">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleItemChange(idx, 'petiCount', Math.max(1, (Number(item.petiCount) || 1) - 1))
+                            }
+                            className="w-8 h-8 rounded-lg bg-slate-200 hover:bg-slate-300 active:bg-slate-400 font-bold text-slate-800 flex items-center justify-center shrink-0 cursor-pointer"
+                            title="Kurang 1 peti"
+                          >
+                            -
+                          </button>
                           <input
                             type="number"
                             min={1}
                             value={item.petiCount}
                             onChange={(e) => handleItemChange(idx, 'petiCount', e.target.value)}
-                            className="w-full px-2.5 py-2 text-xs bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 font-black text-slate-900"
+                            className="w-full px-2 py-1.5 text-sm sm:text-xs bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 font-black text-slate-900 text-center"
                           />
-                          <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">
-                            Peti
-                          </span>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleItemChange(idx, 'petiCount', (Number(item.petiCount) || 0) + 1)
+                            }
+                            className="w-8 h-8 rounded-lg bg-amber-100 hover:bg-amber-200 active:bg-amber-300 font-bold text-amber-900 flex items-center justify-center shrink-0 cursor-pointer"
+                            title="Tambah 1 peti"
+                          >
+                            +
+                          </button>
+                          <span className="text-[10px] font-bold text-slate-400 pl-0.5">Peti</span>
                         </div>
                       </div>
 

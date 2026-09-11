@@ -417,22 +417,42 @@ export const AddFruitOrderForm: React.FC<AddFruitOrderFormProps> = ({
                     </select>
                   </div>
 
-                  {/* 3. Jumlah Peti */}
+                  {/* 3. Jumlah Peti with Stepper for easy mobile tapping */}
                   <div className="sm:col-span-3">
                     <label className="block text-[10px] font-semibold text-slate-500 mb-0.5">
                       Jumlah Peti Dipesan:
                     </label>
-                    <div className="flex items-center space-x-1.5">
+                    <div className="flex items-center space-x-1">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleItemChange(idx, 'petiCount', Math.max(1, (Number(item.petiCount) || 1) - 1))
+                        }
+                        className="w-8 h-8 rounded-lg bg-slate-200 hover:bg-slate-300 active:bg-slate-400 font-bold text-slate-800 flex items-center justify-center shrink-0 cursor-pointer"
+                        title="Kurang 1 peti"
+                      >
+                        -
+                      </button>
                       <input
                         type="number"
                         min={1}
                         value={item.petiCount}
                         onChange={(e) => handleItemChange(idx, 'petiCount', e.target.value)}
-                        className={`w-full px-2.5 py-1.5 text-xs font-black bg-white border rounded-lg text-center ${
+                        className={`w-full px-2 py-1.5 text-sm sm:text-xs font-black bg-white border rounded-lg text-center ${
                           isExceedStock ? 'border-amber-400 text-amber-900 bg-amber-50' : 'border-slate-300'
                         }`}
                       />
-                      <span className="text-[11px] font-bold text-slate-500">Peti</span>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleItemChange(idx, 'petiCount', (Number(item.petiCount) || 0) + 1)
+                        }
+                        className="w-8 h-8 rounded-lg bg-amber-100 hover:bg-amber-200 active:bg-amber-300 font-bold text-amber-900 flex items-center justify-center shrink-0 cursor-pointer"
+                        title="Tambah 1 peti"
+                      >
+                        +
+                      </button>
+                      <span className="text-[11px] font-bold text-slate-500 pl-0.5">Peti</span>
                     </div>
                   </div>
 
@@ -442,7 +462,7 @@ export const AddFruitOrderForm: React.FC<AddFruitOrderFormProps> = ({
                       <button
                         type="button"
                         onClick={() => handleRemoveItemRow(idx)}
-                        className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                        className="p-2 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
                         title="Hapus baris buah"
                       >
                         <Trash2 className="w-4 h-4" />
