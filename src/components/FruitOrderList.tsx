@@ -154,10 +154,12 @@ export const FruitOrderList: React.FC<FruitOrderListProps> = ({
                 {/* Header: Order Number, Date & Status */}
                 <div className="flex items-start justify-between gap-2 border-b border-slate-100 pb-2.5">
                   <div>
-                    <span className="font-black text-amber-950 font-mono text-sm block">
-                      {order.orderNumber}
-                    </span>
-                    <span className="text-[11px] text-slate-400">
+                    <div className="flex items-center space-x-1.5">
+                      <span className="font-bold text-slate-900 font-mono text-xs bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                        {order.orderNumber}
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-slate-400 mt-1 block">
                       {formatDateIndo(order.date)} • {order.time} WIB
                     </span>
                   </div>
@@ -178,13 +180,16 @@ export const FruitOrderList: React.FC<FruitOrderListProps> = ({
                         <option value="dibatalkan">✕ Batal</option>
                       </select>
                     ) : (
-                      <span
-                        className={`inline-block px-2.5 py-1 rounded-full text-[11px] font-bold border capitalize ${getStatusBadge(
+                      <button
+                        type="button"
+                        onClick={onPromptLogin}
+                        title="Login admin untuk ubah status pesanan"
+                        className={`inline-block px-2.5 py-1 rounded-full text-[11px] font-bold border capitalize cursor-pointer hover:opacity-85 transition-opacity ${getStatusBadge(
                           order.status
                         )}`}
                       >
                         {order.status}
-                      </span>
+                      </button>
                     )}
                   </div>
                 </div>
@@ -260,10 +265,21 @@ export const FruitOrderList: React.FC<FruitOrderListProps> = ({
 
                   <button
                     type="button"
-                    onClick={() => onEdit(order)}
-                    className="min-h-[42px] px-2 py-2 text-xs font-bold text-amber-900 bg-amber-100 hover:bg-amber-200 active:bg-amber-300 rounded-xl flex items-center justify-center space-x-1.5 transition-colors cursor-pointer border border-amber-300"
+                    onClick={() => {
+                      if (isAdmin) {
+                        onEdit(order);
+                      } else {
+                        onPromptLogin();
+                      }
+                    }}
+                    className={`min-h-[42px] px-2 py-2 text-xs font-bold rounded-xl flex items-center justify-center space-x-1.5 transition-colors cursor-pointer border ${
+                      isAdmin
+                        ? 'text-amber-900 bg-amber-100 hover:bg-amber-200 active:bg-amber-300 border-amber-300'
+                        : 'text-slate-400 bg-slate-50 border-slate-200 hover:bg-slate-100'
+                    }`}
+                    title={isAdmin ? 'Edit Pesanan' : 'Hanya Admin yang dapat mengedit (Klik untuk Login)'}
                   >
-                    <Edit3 className="w-4 h-4 text-amber-800" />
+                    <Edit3 className="w-4 h-4" />
                     <span>Edit</span>
                   </button>
 
@@ -311,8 +327,10 @@ export const FruitOrderList: React.FC<FruitOrderListProps> = ({
                     <tr key={order.id} className="hover:bg-slate-50/60 transition-colors">
                       {/* 1. No Order & Tanggal */}
                       <td className="py-3 px-4">
-                        <span className="font-black text-amber-900 block">{order.orderNumber}</span>
-                        <span className="text-[11px] text-slate-400">
+                        <span className="font-mono font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 inline-block text-xs">
+                          {order.orderNumber}
+                        </span>
+                        <span className="text-[11px] text-slate-400 block mt-1">
                           {formatDateIndo(order.date)} • {order.time}
                         </span>
                       </td>
@@ -373,13 +391,16 @@ export const FruitOrderList: React.FC<FruitOrderListProps> = ({
                             <option value="dibatalkan">✕ Batal</option>
                           </select>
                         ) : (
-                          <span
-                            className={`inline-block px-2.5 py-1 rounded-full text-[11px] font-bold border capitalize ${getStatusBadge(
+                          <button
+                            type="button"
+                            onClick={onPromptLogin}
+                            title="Login admin untuk ubah status pesanan"
+                            className={`inline-block px-2.5 py-1 rounded-full text-[11px] font-bold border capitalize cursor-pointer hover:opacity-85 transition-opacity ${getStatusBadge(
                               order.status
                             )}`}
                           >
                             {order.status}
-                          </span>
+                          </button>
                         )}
                       </td>
 
@@ -388,9 +409,19 @@ export const FruitOrderList: React.FC<FruitOrderListProps> = ({
                         <div className="flex items-center justify-center space-x-1.5">
                           <button
                             type="button"
-                            onClick={() => onEdit(order)}
-                            className="p-1.5 text-amber-600 hover:text-amber-800 hover:bg-amber-50 rounded-lg transition-colors border border-slate-200 cursor-pointer"
-                            title="Edit Pesanan Buah"
+                            onClick={() => {
+                              if (isAdmin) {
+                                onEdit(order);
+                              } else {
+                                onPromptLogin();
+                              }
+                            }}
+                            className={`p-1.5 rounded-lg transition-colors border cursor-pointer ${
+                              isAdmin
+                                ? 'text-amber-600 hover:text-amber-800 hover:bg-amber-50 border-slate-200'
+                                : 'text-slate-300 hover:text-slate-500 hover:bg-slate-100 border-slate-100'
+                            }`}
+                            title={isAdmin ? 'Edit Pesanan Buah' : 'Hanya Admin yang dapat mengedit (Klik untuk Login)'}
                           >
                             <Edit3 className="w-4 h-4" />
                           </button>

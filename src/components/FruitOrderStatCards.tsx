@@ -24,92 +24,90 @@ export const FruitOrderStatCards: React.FC<FruitOrderStatCardsProps> = ({
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
       {/* 1. Total Peti Dipesan */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs">
+      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold text-slate-500">Total Peti Dipesan</span>
-          <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+          <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Volume Dipesan</span>
+          <div className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-700 flex items-center justify-center">
             <Package className="w-4 h-4" />
           </div>
         </div>
         <div className="mt-2 flex items-baseline space-x-1.5">
-          <span className="text-xl sm:text-2xl font-black text-slate-900">
+          <span className="text-xl sm:text-2xl font-black text-slate-900 font-mono">
             {formatNumber(totalPetiDipesan)}
           </span>
           <span className="text-xs text-slate-500 font-medium">Peti</span>
         </div>
-        <p className="text-[11px] text-slate-400 mt-1">Dari {orders.length} transaksi pesanan</p>
+        <p className="text-[10px] text-slate-400 mt-1">Total {orders.length} berkas pesanan</p>
       </div>
 
       {/* 2. Total Stok Buah Tersedia (Gudang) */}
       <div
         onClick={onOpenStockManager}
-        className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs hover:border-amber-400 transition-colors cursor-pointer group"
-        title="Klik untuk kelola stok buah di gudang"
+        className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs hover:border-slate-400 transition-colors cursor-pointer group"
+        title="Klik untuk kelola stok fisik buah gudang"
       >
         <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold text-slate-500 group-hover:text-amber-700 transition-colors">
-            {totalStokGudang < 0 ? 'Defisit Stok Gudang' : 'Stok Gudang Tersedia'}
+          <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider group-hover:text-slate-900 transition-colors">
+            {totalStokGudang < 0 ? 'Defisit Inventaris' : 'Inventaris Fisik'}
           </span>
-          <div className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${
+          <div className={`w-8 h-8 rounded-lg flex items-center justify-center border transition-colors ${
             totalStokGudang < 0
-              ? 'bg-rose-50 text-rose-600 group-hover:bg-rose-100'
-              : 'bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100'
+              ? 'bg-rose-50 border-rose-200 text-rose-700'
+              : 'bg-slate-50 border-slate-200 text-slate-700'
           }`}>
             <Boxes className="w-4 h-4" />
           </div>
         </div>
         <div className="mt-2 flex items-baseline space-x-1.5">
-          <span className={`text-xl sm:text-2xl font-black ${
-            totalStokGudang < 0 ? 'text-rose-600' : 'text-emerald-800'
+          <span className={`text-xl sm:text-2xl font-black font-mono ${
+            totalStokGudang < 0 ? 'text-rose-600' : 'text-slate-900'
           }`}>
             {formatNumber(totalStokGudang)}
           </span>
           <span className="text-xs text-slate-500 font-medium">Peti</span>
           {totalStokGudang < 0 && (
-            <span className="text-[10px] font-bold text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200">
+            <span className="text-[10px] font-bold text-rose-700 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200">
               Minus
             </span>
           )}
         </div>
-        <p className={`text-[11px] font-semibold mt-1 ${
-          totalStokGudang < 0 ? 'text-rose-600' : 'text-emerald-600'
-        }`}>
-          {totalStokGudang < 0 ? 'Perlu penambahan buah (klik kelola)' : 'Klik untuk kelola stok &rarr;'}
+        <p className="text-[10px] font-medium text-slate-500 mt-1">
+          {totalStokGudang < 0 ? 'Perlu penambahan buah (klik kelola)' : 'Klik kelola buku stok &rarr;'}
         </p>
       </div>
 
       {/* 3. Pesanan Dalam Proses */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs">
+      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold text-slate-500">Sedang Diproses</span>
-          <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+          <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Antrean / Proses</span>
+          <div className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-700 flex items-center justify-center">
             <Clock className="w-4 h-4" />
           </div>
         </div>
         <div className="mt-2 flex items-baseline space-x-1.5">
-          <span className="text-xl sm:text-2xl font-black text-blue-700">
+          <span className="text-xl sm:text-2xl font-black text-slate-900 font-mono">
             {pendingOrders}
           </span>
-          <span className="text-xs text-slate-500 font-medium">Pesanan</span>
+          <span className="text-xs text-slate-500 font-medium">Order</span>
         </div>
-        <p className="text-[11px] text-slate-400 mt-1">Menunggu & proses pengemasan</p>
+        <p className="text-[10px] text-slate-400 mt-1">Dalam pengerjaan kemasan</p>
       </div>
 
       {/* 4. Pesanan Selesai */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs">
+      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold text-slate-500">Pesanan Selesai</span>
-          <div className="w-8 h-8 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center">
+          <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Realisasi Selesai</span>
+          <div className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-700 flex items-center justify-center">
             <CheckCircle2 className="w-4 h-4" />
           </div>
         </div>
         <div className="mt-2 flex items-baseline space-x-1.5">
-          <span className="text-xl sm:text-2xl font-black text-teal-700">
+          <span className="text-xl sm:text-2xl font-black text-slate-900 font-mono">
             {completedOrders}
           </span>
-          <span className="text-xs text-slate-500 font-medium">Pesanan</span>
+          <span className="text-xs text-slate-500 font-medium">Order</span>
         </div>
-        <p className="text-[11px] text-slate-400 mt-1">Telah dikirim atau diterima</p>
+        <p className="text-[10px] text-slate-400 mt-1">Telah diserahterimakan</p>
       </div>
     </div>
   );

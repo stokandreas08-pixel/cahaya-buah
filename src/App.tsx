@@ -22,6 +22,8 @@ import { FruitOrderStatCards } from './components/FruitOrderStatCards';
 import { PrintFruitOrderModal } from './components/PrintFruitOrderModal';
 import { FruitStockModal } from './components/FruitStockModal';
 import { EditFruitOrderModal } from './components/EditFruitOrderModal';
+import { AdminSettingsModal } from './components/AdminSettingsModal';
+import { MobileBottomNav } from './components/MobileBottomNav';
 import { 
   subscribeToRecords, 
   addRecordToCloud, 
@@ -112,6 +114,7 @@ export default function App() {
 
   // Modals
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isAdminSettingsOpen, setIsAdminSettingsOpen] = useState(false);
   const [isStockModalOpen, setIsStockModalOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<CarUnloadingRecord | null>(null);
   const [printingRecord, setPrintingRecord] = useState<CarUnloadingRecord | null>(null);
@@ -292,6 +295,11 @@ export default function App() {
 
   // ---------------- FRUIT ORDERS ACTIONS (PER PETI) ----------------
   const handleAddFruitOrder = async (order: FruitOrder) => {
+    if (!isAdmin) {
+      setIsLoginModalOpen(true);
+      return;
+    }
+
     setFruitOrders(prev => [order, ...prev]);
 
     // Automatically update local & cloud stock for ordered items (allowing negative stock when order exceeds stock)
@@ -314,6 +322,11 @@ export default function App() {
   };
 
   const handleEditFruitOrder = async (updatedOrder: FruitOrder) => {
+    if (!isAdmin) {
+      setIsLoginModalOpen(true);
+      return;
+    }
+
     const oldOrder = fruitOrders.find((o) => o.id === updatedOrder.id);
     if (!oldOrder) return;
 
@@ -365,6 +378,11 @@ export default function App() {
   };
 
   const handleUpdateFruitOrderStatus = async (id: string, status: OrderStatus) => {
+    if (!isAdmin) {
+      setIsLoginModalOpen(true);
+      return;
+    }
+
     setFruitOrders(prev =>
       prev.map(o => (o.id === id ? { ...o, status } : o))
     );
@@ -553,11 +571,12 @@ export default function App() {
         onLoginClick={() => setIsLoginModalOpen(true)}
         onLogout={handleLogout}
         onLogoutClick={handleLogout}
+        onOpenAdminSettings={() => setIsAdminSettingsOpen(true)}
         isRealtimeConnected={isRealtimeConnected}
       />
 
       {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 py-4 sm:py-6 pb-24 md:pb-8">
         {activeTab === 'bungkaran' ? (
           /* TAB 1: DATA BUNGKARAN & UPAH MOBIL */
           <div>
@@ -614,7 +633,13 @@ export default function App() {
                 window.scrollTo({ top: 120, behavior: 'smooth' });
                 showToast(`Memilih ${fruitId} ukuran ${size || 'standar'} untuk pesanan`);
               }}
-              onOpenStockManager={() => setIsStockModalOpen(true)}
+              onOpenStockManager={() => {
+                if (!isAdmin) {
+                  setIsLoginModalOpen(true);
+                  return;
+                }
+                setIsStockModalOpen(true);
+              }}
             />
 
             {/* Form Buat Pesanan Peti */}
@@ -710,6 +735,60 @@ export default function App() {
         records={records}
         isOpen={isWorkerSummaryOpen}
         onClose={() => setIsWorkerSummaryOpen(false)}
+      />
+
+      {/* Admin Settings Modal (Password, Profil, Foto) */}
+      <AdminSettingsModal
+        isOpen={isAdminSettingsOpen}
+        onClose={() => setIsAdminSettingsOpen(false)}
+        adminUser={adminUser}
+        currentUser={adminUser}
+        onProfileUpdated={(updatedUser) => {
+          setAdminUser(updatedUser);
+          showToast('Profil admin berhasil diperbarui!');
+        }}
+        onPasswordChanged={() => {
+          showToast('Password admin berhasil diubah!');
+        }}
+        onLogout={() => {
+          setIsAdminSettingsOpen(false);
+          handleLogout();
+        }}
+      />
+
+      {/* Mobile Bottom Navigation */}
+      <MobileBottomNav
+        activeTab={activeTab}
+        onSelectTab={setActiveTab}
+        onOpenNew={() => {
+          if (!isAdmin) {
+            setIsLoginModalOpen(true);
+            return;
+          }
+          if (activeTab === 'bungkaran') {
+            const el = document.getElementById('simple-add-form');
+            if (el) el.scrollIntoView({ behavior: 'smooth' });
+            else window.scrollTo({ top: 120, behavior: 'smooth' });
+          } else {
+            const el = document.getElementById('add-fruit-order-form');
+            if (el) el.scrollIntoView({ behavior: 'smooth' });
+            else window.scrollTo({ top: 120, behavior: 'smooth' });
+          }
+        }}
+        onOpenWorkerSummary={() => setIsWorkerSummaryOpen(true)}
+        onOpenStockManager={() => {
+          if (!isAdmin) {
+            setIsLoginModalOpen(true);
+            return;
+          }
+          setIsStockModalOpen(true);
+        }}
+        isAdmin={isAdmin}
+        adminUser={adminUser}
+        onOpenLogin={() => setIsLoginModalOpen(true)}
+        onOpenAdminSettings={() => setIsAdminSettingsOpen(true)}
+        totalRecords={records.length}
+        totalFruitOrders={fruitOrders.length}
       />
     </div>
   );

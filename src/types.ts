@@ -1,4 +1,5 @@
 export type PaymentStatus = 'lunas' | 'belum_dibayar';
+export type MainTab = 'bungkaran' | 'pesanan_peti';
 
 export interface CarUnloadingRecord {
   id: string;

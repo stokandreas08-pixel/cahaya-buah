@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { X, Lock, ShieldCheck, AlertCircle, KeyRound, Sparkles } from 'lucide-react';
-import { loginAsAdmin, DEFAULT_ADMIN_EMAIL, DEFAULT_ADMIN_PASSWORD, AdminUser } from '../services/authService';
+import React, { useState, useEffect } from 'react';
+import { X, Lock, ShieldCheck, AlertCircle, KeyRound } from 'lucide-react';
+import { loginAsAdmin, AdminUser } from '../services/authService';
 
 interface AdminLoginModalProps {
   isOpen: boolean;
@@ -13,10 +13,21 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
   onClose,
   onLoginSuccess,
 }) => {
-  const [email, setEmail] = useState(DEFAULT_ADMIN_EMAIL);
-  const [password, setPassword] = useState(DEFAULT_ADMIN_PASSWORD);
+  // Input default kosong bersih
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+
+  // Pastikan form selalu kosong saat modal dibuka
+  useEffect(() => {
+    if (isOpen) {
+      setEmail('');
+      setPassword('');
+      setErrorMsg('');
+      setIsLoading(false);
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -36,43 +47,42 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
     }
   };
 
-  const handleFillDefault = () => {
-    setEmail(DEFAULT_ADMIN_EMAIL);
-    setPassword(DEFAULT_ADMIN_PASSWORD);
-    setErrorMsg('');
-  };
-
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
       <div className="bg-white w-full max-w-md rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
         {/* Header */}
         <div className="px-5 py-4 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
           <div className="flex items-center space-x-2.5">
-            <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center">
-              <Lock className="w-4 h-4 text-emerald-700" />
+            <div className="w-8 h-8 rounded-xl bg-slate-900 text-white flex items-center justify-center">
+              <Lock className="w-4 h-4 text-amber-400" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-slate-900">Login Administrator</h2>
-              <p className="text-[11px] text-slate-500">Kelola bungkaran buah & hak akses penuh</p>
+              <h2 className="text-sm font-bold text-slate-900">Autentikasi Admin Keuangan</h2>
+              <p className="text-[11px] text-slate-500">Kantor Administrasi & Gudang Cahaya Buah</p>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg"
+            className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Content */}
-        <form onSubmit={handleSubmit} className="p-5 space-y-4 text-xs">
+        <form onSubmit={handleSubmit} className="p-5 space-y-4 text-xs" autoComplete="off">
           {/* Info Banner */}
-          <div className="p-3 bg-emerald-50/70 border border-emerald-200 rounded-xl flex items-start space-x-2">
+          <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-start space-x-2.5">
             <ShieldCheck className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
-            <p className="text-[11px] text-emerald-950 leading-relaxed">
-              Sebagai <strong>Admin</strong>, setiap penambahan, perubahan, atau penghapusan bungkaran akan <strong>langsung ter-update otomatis secara real-time</strong> di layar semua klien & pekerja tanpa perlu refresh.
-            </p>
+            <div className="text-[11px] text-slate-700 leading-relaxed">
+              <p>
+                Masuk sebagai <strong>Admin Keuangan Cahaya Buah</strong> untuk hak akses pencatatan, pengubahan tarif, dan verifikasi status pembayaran.
+              </p>
+              <p className="text-[10px] text-slate-500 pt-0.5">
+                Masukkan email dan kata sandi resmi administrator kantor.
+              </p>
+            </div>
           </div>
 
           {errorMsg && (
@@ -84,16 +94,18 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
 
           <div>
             <label className="block font-bold text-slate-700 mb-1">
-              Email Admin
+              Email Administrator
             </label>
             <input
-              id="admin-email"
+              id="admin-email-input"
+              name="admin_account_email"
               type="email"
+              autoComplete="off"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="admin@gudang.com"
-              className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500"
+              placeholder="Masukkan email admin..."
+              className="w-full px-3.5 py-2 text-sm bg-white border border-slate-200 rounded-xl focus:border-slate-400 focus:ring-2 focus:ring-slate-200 text-slate-900"
             />
           </div>
 
@@ -102,26 +114,23 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
               Kata Sandi (Password)
             </label>
             <input
-              id="admin-password"
+              id="admin-password-input"
+              name="admin_account_password"
               type="password"
+              autoComplete="new-password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500"
+              placeholder="Masukkan kata sandi..."
+              className="w-full px-3.5 py-2 text-sm bg-white border border-slate-200 rounded-xl focus:border-slate-400 focus:ring-2 focus:ring-slate-200 text-slate-900"
             />
           </div>
 
-          {/* Quick preset button */}
-          <div className="pt-1">
-            <button
-              type="button"
-              onClick={handleFillDefault}
-              className="w-full py-1.5 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-[11px] font-semibold flex items-center justify-center space-x-1.5 transition-colors border border-slate-200"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-              <span>Gunakan Akun Default (admin@gudang.com / admin123456)</span>
-            </button>
+          {/* Catatan verifikasi */}
+          <div className="pt-0.5">
+            <p className="text-[11px] text-slate-500 text-center bg-slate-50 py-1.5 px-2.5 rounded-xl border border-slate-200">
+              Input harus sesuai dengan kredensial resmi kantor keuangan.
+            </p>
           </div>
 
           <div className="pt-3 border-t border-slate-100 flex items-center justify-end space-x-2">
@@ -136,9 +145,9 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
               id="btn-login-submit"
               type="submit"
               disabled={isLoading}
-              className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center space-x-1.5 shadow-sm transition-all disabled:opacity-50"
+              className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold flex items-center space-x-1.5 shadow-2xs transition-all disabled:opacity-50 cursor-pointer"
             >
-              <KeyRound className="w-3.5 h-3.5" />
+              <KeyRound className="w-3.5 h-3.5 text-amber-400" />
               <span>{isLoading ? 'Memverifikasi...' : 'Masuk sebagai Admin'}</span>
             </button>
           </div>

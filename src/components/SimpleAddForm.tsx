@@ -3,6 +3,18 @@ import { Plus, Check, Calculator, Users, X, Radio, Lock, ShieldCheck } from 'luc
 import { CarUnloadingRecord, PaymentStatus } from '../types';
 import { formatRupiah } from '../utils/formatters';
 
+// 8 Daftar Pembungkar Tetap Sesuai Permintaan
+export const DEFAULT_WORKER_NAMES = [
+  'Aldo',
+  'Gilang',
+  'Eno',
+  'Indra',
+  'Hen',
+  'Marwa',
+  'Sudar',
+  'Rian',
+];
+
 interface SimpleAddFormProps {
   onAdd: (record: CarUnloadingRecord) => void;
   existingCodes?: string[];
@@ -20,20 +32,19 @@ export const SimpleAddForm: React.FC<SimpleAddFormProps> = ({
 }) => {
   const [packagingCode, setPackagingCode] = useState('');
   const [packageCount, setPackageCount] = useState<string>('100');
-  const [wagePerCar, setWagePerCar] = useState<string>('300000');
+  // Default Upah Per Mobil Rp 600.000 sesuai permintaan user
+  const [wagePerCar, setWagePerCar] = useState<string>('600000');
   const [workerTeam, setWorkerTeam] = useState('');
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>('lunas');
   const [usePerPackageCalc, setUsePerPackageCalc] = useState(false);
   const [ratePerPackage, setRatePerPackage] = useState('2000');
 
-  // List of worker names for this car
-  const [workerNames, setWorkerNames] = useState<string[]>(['Slamet', 'Joko', 'Anto']);
+  // List of worker names for this car - default 4 orang awal atau bisa pilih cepat
+  const [workerNames, setWorkerNames] = useState<string[]>(['Aldo', 'Gilang', 'Eno', 'Indra']);
   const [newWorkerInput, setNewWorkerInput] = useState('');
 
-  // Default suggested worker names
-  const defaultWorkerSuggestions = Array.from(
-    new Set([...(Array.isArray(existingWorkers) ? existingWorkers : []), 'Slamet', 'Joko', 'Anto', 'Budi', 'Udin', 'Herman', 'Asep'])
-  );
+  // Saran nama pembungkar: HANYA 8 NAMA SESUAI PERMINTAAN USER
+  const defaultWorkerSuggestions = DEFAULT_WORKER_NAMES;
 
   // If calculating by rate x count
   const handleRateOrCountChange = (rateVal: string, countVal: string) => {
@@ -106,9 +117,10 @@ export const SimpleAddForm: React.FC<SimpleAddFormProps> = ({
 
     onAdd(newRecord);
 
-    // Reset inputs for next entry, keep workers ready
+    // Reset inputs for next entry, keep workers ready and default wage 600000
     setPackagingCode('');
     setPackageCount('100');
+    setWagePerCar('600000');
   };
 
   // Preset example codes
@@ -261,17 +273,30 @@ export const SimpleAddForm: React.FC<SimpleAddFormProps> = ({
                 </span>
               </div>
             ) : (
-              <input
-                id="input-wage-car"
-                type="number"
-                step="5000"
-                min="0"
-                required
-                placeholder="Contoh: 300000"
-                value={wagePerCar}
-                onChange={e => setWagePerCar(e.target.value)}
-                className="w-full px-3 py-2 text-sm font-black bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500 text-emerald-800"
-              />
+              <div>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-black text-slate-400">
+                    Rp
+                  </span>
+                  <input
+                    id="input-wage-car"
+                    type="number"
+                    step="10000"
+                    min="0"
+                    required
+                    placeholder="600000"
+                    value={wagePerCar}
+                    onChange={e => setWagePerCar(e.target.value)}
+                    className="w-full pl-9 pr-3 py-2 text-sm font-black bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500 text-emerald-800"
+                  />
+                </div>
+                <div className="mt-1 flex items-center justify-between text-[11px] font-bold text-emerald-800 bg-emerald-50/80 px-2.5 py-1 rounded-lg border border-emerald-200">
+                  <span className="text-emerald-700">Format Rupiah:</span>
+                  <span className="font-black text-xs text-emerald-900">
+                    {formatRupiah(parseFloat(wagePerCar) || 0)}
+                  </span>
+                </div>
+              </div>
             )}
           </div>
 
@@ -364,28 +389,51 @@ export const SimpleAddForm: React.FC<SimpleAddFormProps> = ({
             </div>
           </div>
 
-          {/* Quick Click from available worker suggestions */}
-          <div className="flex flex-wrap items-center gap-1 text-xs text-slate-500">
-            <span className="text-[11px] text-slate-500 font-medium mr-1">
-              Pilih cepat pembungkar:
+          {/* Quick Click from available worker suggestions (8 nama pembungkar tetap) */}
+          <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-500 pt-2 border-t border-emerald-100/80">
+            <span className="text-[11px] text-slate-700 font-bold mr-1">
+              Pilih cepat pembungkar (8 nama):
             </span>
-            {defaultWorkerSuggestions.map(sug => {
+            {defaultWorkerSuggestions.map((sug, idx) => {
               const isSelected = workerNames.includes(sug);
               return (
                 <button
                   key={sug}
                   type="button"
                   onClick={() => handleToggleWorkerSuggestion(sug)}
-                  className={`px-2 py-0.5 rounded-md text-[11px] font-semibold transition-all border ${
+                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all border cursor-pointer ${
                     isSelected
-                      ? 'bg-emerald-600 text-white border-emerald-600 shadow-2xs'
-                      : 'bg-white text-slate-700 border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/50'
+                      ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                      : 'bg-white text-slate-700 border-slate-300 hover:border-emerald-400 hover:bg-emerald-50'
                   }`}
+                  title={`${isSelected ? 'Hapus' : 'Pilih'} ${sug}`}
                 >
-                  {isSelected ? `✓ ${sug}` : `+ ${sug}`}
+                  <span className="text-[10px] opacity-75 mr-0.5">{idx + 1}.</span>
+                  <span>{isSelected ? `✓ ${sug}` : `+ ${sug}`}</span>
                 </button>
               );
             })}
+
+            <div className="flex items-center space-x-1.5 ml-auto mt-1 sm:mt-0">
+              <button
+                type="button"
+                onClick={() => setWorkerNames([...defaultWorkerSuggestions])}
+                className="px-2.5 py-1 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 rounded-lg text-[11px] font-bold cursor-pointer transition-colors"
+                title="Pilih semua 8 orang pembungkar"
+              >
+                Pilih Semua (8)
+              </button>
+              {workerNames.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setWorkerNames([])}
+                  className="px-2 py-1 bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 rounded-lg text-[11px] font-semibold cursor-pointer transition-colors"
+                  title="Kosongkan pilihan pembungkar"
+                >
+                  Reset
+                </button>
+              )}
+            </div>
           </div>
         </div>
 

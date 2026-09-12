@@ -8,17 +8,67 @@ import {
 import { auth } from './firebase';
 
 const ADMIN_SESSION_KEY = 'bungkaran_admin_session';
+const ADMIN_CUSTOM_PASSWORD_KEY = 'bungkaran_admin_custom_pwd';
 
 export interface AdminUser {
   email: string;
   isAdmin: boolean;
   uid?: string;
   name?: string;
+  avatarUrl?: string;
+  roleTitle?: string;
+  updatedAt?: string;
 }
 
-// Default credentials for warehouse manager/admin
-export const DEFAULT_ADMIN_EMAIL = 'admin@gudang.com';
-export const DEFAULT_ADMIN_PASSWORD = 'admin123456';
+// Official credentials for financial office / warehouse manager
+export const DEFAULT_ADMIN_EMAIL = 'cahayabuah@gmail.com';
+export const DEFAULT_ADMIN_PASSWORD = 'cahayabuah';
+
+/**
+ * Get active admin password (either customized or default)
+ */
+export function getAdminPassword(): string {
+  try {
+    const custom = localStorage.getItem(ADMIN_CUSTOM_PASSWORD_KEY);
+    if (custom && custom.trim().length >= 4) {
+      return custom.trim();
+    }
+  } catch (e) {
+    // fallback
+  }
+  return DEFAULT_ADMIN_PASSWORD;
+}
+
+/**
+ * Update admin password
+ */
+export function updateAdminPassword(oldPassword: string, newPassword: string): void {
+  const currentPassword = getAdminPassword();
+  if (oldPassword.trim() !== currentPassword) {
+    throw new Error('Kata sandi lama yang Anda masukkan salah!');
+  }
+  if (!newPassword || newPassword.trim().length < 4) {
+    throw new Error('Kata sandi baru minimal 4 karakter!');
+  }
+  localStorage.setItem(ADMIN_CUSTOM_PASSWORD_KEY, newPassword.trim());
+}
+
+/**
+ * Update admin profile information (name, avatar, role title)
+ */
+export function updateAdminProfile(updates: Partial<AdminUser>): AdminUser {
+  const current = getSavedAdminSession();
+  if (!current) {
+    throw new Error('Sesi admin tidak ditemukan. Silakan login terlebih dahulu.');
+  }
+  const updated: AdminUser = {
+    ...current,
+    ...updates,
+    updatedAt: new Date().toISOString(),
+  };
+  saveAdminSession(updated);
+  return updated;
+}
 
 /**
  * Check if currently stored admin session exists
@@ -28,7 +78,16 @@ export function getSavedAdminSession(): AdminUser | null {
     const raw = localStorage.getItem(ADMIN_SESSION_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (parsed && parsed.isAdmin) return parsed;
+      if (
+        parsed && 
+        parsed.isAdmin && 
+        parsed.email && 
+        parsed.email.toLowerCase() === DEFAULT_ADMIN_EMAIL.toLowerCase()
+      ) {
+        return parsed;
+      }
+      // Bersihkan sesi lama yang tidak sesuai
+      localStorage.removeItem(ADMIN_SESSION_KEY);
     }
   } catch (e) {
     console.error('Error reading admin session', e);
@@ -53,6 +112,12 @@ export function saveAdminSession(admin: AdminUser | null) {
 export async function loginAsAdmin(email: string, password: string): Promise<AdminUser> {
   const trimmedEmail = email.trim().toLowerCase();
   const trimmedPassword = password.trim();
+  const validPassword = getAdminPassword();
+
+  // Validasi ketat: Hanya email dan password resmi admin yang diizinkan
+  if (trimmedEmail !== DEFAULT_ADMIN_EMAIL.toLowerCase() || trimmedPassword !== validPassword) {
+    throw new Error('Email atau kata sandi admin salah! Akses ditolak.');
+  }
 
   let fbUser: User | null = null;
 
@@ -67,30 +132,25 @@ export async function loginAsAdmin(email: string, password: string): Promise<Adm
         const createCredential = await createUserWithEmailAndPassword(auth, trimmedEmail, trimmedPassword);
         fbUser = createCredential.user;
       } catch (createErr: any) {
-        // If Firebase Auth provider is not enabled or throws error, check admin verification fallback
-        console.warn('Firebase Auth create error, using validated session:', createErr);
+        console.warn('Firebase Auth create notice:', createErr);
       }
     } else {
-      console.warn('Firebase Auth sign in error, evaluating fallback:', err);
+      console.warn('Firebase Auth sign in notice:', err);
     }
   }
 
-  // Verify credentials (matches default or custom admin credentials)
-  const isDefaultAdmin = (trimmedEmail === DEFAULT_ADMIN_EMAIL && trimmedPassword === DEFAULT_ADMIN_PASSWORD);
-  const isValidCustomAdmin = (trimmedEmail.includes('admin') || trimmedPassword.length >= 6);
+  const existingProfile = getSavedAdminSession();
 
-  if (fbUser || isDefaultAdmin || isValidCustomAdmin) {
-    const adminData: AdminUser = {
-      email: trimmedEmail,
-      isAdmin: true,
-      uid: fbUser ? fbUser.uid : 'admin-local',
-      name: trimmedEmail.split('@')[0],
-    };
-    saveAdminSession(adminData);
-    return adminData;
-  }
-
-  throw new Error('Email atau kata sandi admin tidak sesuai. Gunakan email dan password admin yang benar.');
+  const adminData: AdminUser = {
+    email: DEFAULT_ADMIN_EMAIL,
+    isAdmin: true,
+    uid: fbUser ? fbUser.uid : 'admin-cahayabuah',
+    name: existingProfile?.name || 'Admin Keuangan',
+    avatarUrl: existingProfile?.avatarUrl || '',
+    roleTitle: existingProfile?.roleTitle || 'Administrator Keuangan & Gudang',
+  };
+  saveAdminSession(adminData);
+  return adminData;
 }
 
 /**
@@ -117,11 +177,14 @@ export function subscribeToAuth(onUserChange: (user: AdminUser | null) => void) 
 
   return onAuthStateChanged(auth, (user) => {
     if (user) {
+      const existing = getSavedAdminSession();
       const admin: AdminUser = {
         email: user.email || DEFAULT_ADMIN_EMAIL,
         isAdmin: true,
         uid: user.uid,
-        name: user.email?.split('@')[0] || 'Admin',
+        name: existing?.name || user.email?.split('@')[0] || 'Admin Keuangan',
+        avatarUrl: existing?.avatarUrl || '',
+        roleTitle: existing?.roleTitle || 'Administrator Keuangan & Gudang',
       };
       saveAdminSession(admin);
       onUserChange(admin);

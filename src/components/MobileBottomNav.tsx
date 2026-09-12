@@ -1,6 +1,7 @@
 import React from 'react';
 import { Truck, ShoppingBag, Plus, Users, Boxes, ShieldCheck, LogIn } from 'lucide-react';
 import { MainTab } from '../types';
+import { AdminUser } from '../services/authService';
 
 interface MobileBottomNavProps {
   activeTab: MainTab;
@@ -9,7 +10,9 @@ interface MobileBottomNavProps {
   onOpenWorkerSummary: () => void;
   onOpenStockManager: () => void;
   isAdmin: boolean;
+  adminUser?: AdminUser | null;
   onOpenLogin: () => void;
+  onOpenAdminSettings?: () => void;
   totalRecords: number;
   totalFruitOrders: number;
 }
@@ -21,7 +24,9 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   onOpenWorkerSummary,
   onOpenStockManager,
   isAdmin,
+  adminUser,
   onOpenLogin,
+  onOpenAdminSettings,
   totalRecords,
   totalFruitOrders,
 }) => {
@@ -117,23 +122,31 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           </button>
         )}
 
-        {/* Profile / Admin Login */}
+        {/* Profile / Admin Login / Settings */}
         <button
           id="mobile-nav-admin-btn"
           type="button"
-          onClick={onOpenLogin}
+          onClick={isAdmin && onOpenAdminSettings ? onOpenAdminSettings : onOpenLogin}
           className={`flex-1 flex flex-col items-center justify-center py-1.5 px-1 rounded-xl transition-colors cursor-pointer ${
             isAdmin ? 'text-emerald-700 font-bold' : 'text-slate-500 hover:text-slate-800'
           }`}
-          title={isAdmin ? 'Status Admin Aktif' : 'Login Admin'}
+          title={isAdmin ? 'Buka Pengaturan Akun Admin (Password & Foto)' : 'Login Admin'}
         >
           {isAdmin ? (
-            <ShieldCheck className="w-5 h-5 text-emerald-700" />
+            adminUser?.avatarUrl ? (
+              <img
+                src={adminUser.avatarUrl}
+                alt="Admin Avatar"
+                className="w-5 h-5 rounded-full object-cover border border-emerald-400"
+              />
+            ) : (
+              <ShieldCheck className="w-5 h-5 text-emerald-700" />
+            )
           ) : (
             <LogIn className="w-5 h-5 text-slate-500" />
           )}
           <span className="text-[10px] mt-1 tracking-tight">
-            {isAdmin ? 'Admin' : 'Login'}
+            {isAdmin ? (adminUser?.name?.split(' ')[0] || 'Admin') : 'Login'}
           </span>
         </button>
       </div>

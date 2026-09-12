@@ -1,6 +1,6 @@
 {
-  "name": "Pencatatan Bongkar Buah & Upah",
-  "description": "Pencatatan bungkaran buah, upah per mobil, pesanan buah per peti (Jeruk Gina, Jeruk Faisal, Salak, Buah Naga), dan manajemen stok peti real-time.",
+  "name": "Cahaya Buah - Administrasi Keuangan",
+  "description": "Aplikasi administrasi dan pembukuan keuangan Cahaya Buah: buku besar bungkaran, upah bongkar mobil, registrasi pesanan buah per peti (ORD-0001, dst.), dan stok gudang.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

@@ -62,7 +62,7 @@ export const initialFruitStock: StockMap = {
 export const initialFruitOrders: FruitOrder[] = [
   {
     id: 'order-sample-01',
-    orderNumber: 'ORD-001',
+    orderNumber: 'ORD-0001',
     customerName: 'H. Syamsul (Pasar Induk)',
     customerPhone: '0812-3456-7890',
     date: new Date().toISOString().split('T')[0],
@@ -90,7 +90,7 @@ export const initialFruitOrders: FruitOrder[] = [
   },
   {
     id: 'order-sample-02',
-    orderNumber: 'ORD-002',
+    orderNumber: 'ORD-0002',
     customerName: 'Toko Buah Berkah Mandiri',
     customerPhone: '0857-1122-3344',
     date: new Date().toISOString().split('T')[0],
@@ -117,4 +117,24 @@ export const initialFruitOrders: FruitOrder[] = [
     createdAt: new Date(Date.now() - 3600000).toISOString(),
   },
 ];
+
+/**
+ * Menghasilkan nomor urut order sesuai urutan sistem: ORD-0001, ORD-0002, ORD-0003, DST...
+ */
+export function getNextOrderNumber(existingOrders: FruitOrder[] = []): string {
+  let maxSeq = 0;
+  existingOrders.forEach((o) => {
+    if (!o || !o.orderNumber) return;
+    const match = o.orderNumber.match(/ORD-(\d+)/i);
+    if (match && match[1]) {
+      const num = parseInt(match[1], 10);
+      if (!isNaN(num) && num > maxSeq) {
+        maxSeq = num;
+      }
+    }
+  });
+
+  const nextSeq = maxSeq + 1;
+  return `ORD-${String(nextSeq).padStart(4, '0')}`;
+}
 

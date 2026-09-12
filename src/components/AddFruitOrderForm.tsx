@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, ShoppingBag, Check, AlertCircle, AlertTriangle, Package, X, UserCheck } from 'lucide-react';
+import { Plus, Trash2, ShoppingBag, Check, AlertCircle, AlertTriangle, Package, X, UserCheck, Hash, Radio, Lock } from 'lucide-react';
 import { FruitOrder, OrderItem, FruitType, StockMap } from '../types';
-import { FRUIT_CATALOG, getStockKey } from '../data/fruitCatalog';
+import { FRUIT_CATALOG, getStockKey, getNextOrderNumber } from '../data/fruitCatalog';
 
 interface AddFruitOrderFormProps {
   onAddOrder: (order: FruitOrder) => void;
@@ -155,6 +155,11 @@ export const AddFruitOrderForm: React.FC<AddFruitOrderFormProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!isAdmin) {
+      onPromptLogin();
+      return;
+    }
+
     if (!customerName.trim()) {
       alert('Mohon masukkan nama pemesan / pelanggan');
       return;
@@ -165,7 +170,7 @@ export const AddFruitOrderForm: React.FC<AddFruitOrderFormProps> = ({
       return;
     }
 
-    const orderNumber = 'ORD-' + Math.floor(1000 + Math.random() * 9000);
+    const orderNumber = getNextOrderNumber(existingOrders);
     const now = new Date();
     const dateStr = now.toISOString().split('T')[0];
     const timeStr = now.toTimeString().substring(0, 5);
@@ -206,27 +211,72 @@ export const AddFruitOrderForm: React.FC<AddFruitOrderFormProps> = ({
     executeAddOrder(newOrder);
   };
 
-  return (
-    <div id="add-fruit-order-form" className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs mb-6">
-      <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-100">
-        <div className="flex items-center space-x-2.5">
-          <div className="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold text-xs shadow-2xs">
-            <ShoppingBag className="w-4 h-4" />
+  const nextSeqPreview = getNextOrderNumber(existingOrders);
+
+  if (!isAdmin) {
+    return (
+      <div className="bg-gradient-to-r from-amber-50/80 via-orange-50/40 to-slate-50 p-5 rounded-2xl border border-amber-200/80 shadow-xs mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex items-start space-x-3.5">
+          <div className="w-10 h-10 rounded-xl bg-amber-600 text-white flex items-center justify-center shrink-0 shadow-xs mt-0.5">
+            <Radio className="w-5 h-5 animate-pulse" />
           </div>
           <div>
-            <h2 className="text-sm sm:text-base font-bold text-slate-900">
-              Buat Pesanan Buah (Jumlah Peti)
-            </h2>
-            <p className="text-[11px] text-slate-500">
-              Pilihan Jeruk Gina, Jeruk Faisal (AB, C, DTOP, DR, DK), Salak, & Buah Naga (A, B)
+            <div className="flex items-center space-x-2">
+              <h2 className="text-sm sm:text-base font-bold text-slate-900">
+                Mode Klien / Viewer (Live Real-Time Aktif)
+              </h2>
+              <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-600 animate-pulse"></span>
+                <span>Sinkron Otomatis</span>
+              </span>
+            </div>
+            <p className="text-xs text-slate-600 mt-1 leading-relaxed max-w-2xl">
+              Halaman pesanan buah ini akan <strong>otomatis ter-update sendiri</strong> setiap kali Admin menambahkan pesanan buah baru, mengubah status, atau menghapus pesanan tanpa perlu refresh halaman.
             </p>
           </div>
         </div>
 
-        <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-amber-50 text-amber-900 border border-amber-200 flex items-center space-x-1">
-          <Package className="w-3.5 h-3.5 text-amber-700" />
-          <span>Fokus Jumlah Peti</span>
-        </span>
+        <button
+          id="btn-prompt-login-order-form"
+          type="button"
+          onClick={onPromptLogin}
+          className="shrink-0 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl flex items-center space-x-2 shadow-xs transition-all cursor-pointer"
+        >
+          <Lock className="w-3.5 h-3.5" />
+          <span>Login Admin untuk Buat Pesanan</span>
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div id="add-fruit-order-form" className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 mb-4 border-b border-slate-100 gap-2">
+        <div className="flex items-center space-x-2.5">
+          <div className="w-8 h-8 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold text-xs shadow-2xs">
+            <ShoppingBag className="w-4 h-4 text-amber-400" />
+          </div>
+          <div>
+            <div className="flex items-center space-x-2">
+              <h2 className="text-sm sm:text-base font-bold text-slate-900">
+                Formulir Pesanan Buah (Per Peti)
+              </h2>
+              <span className="px-2 py-0.5 rounded-md bg-amber-50 text-amber-900 border border-amber-200 text-[10px] font-mono font-bold tracking-wide">
+                No. Order: {nextSeqPreview}
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-500">
+              Administrasi pesanan: Jeruk Gina, Jeruk Faisal (AB, C, DTOP, DR, DK), Salak, & Buah Naga (A, B)
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center space-x-2 self-start sm:self-auto">
+          <span className="text-[11px] font-mono font-bold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-800 border border-slate-200 flex items-center space-x-1.5">
+            <Hash className="w-3.5 h-3.5 text-slate-500" />
+            <span>Urutan: <strong className="text-amber-900 font-black">{nextSeqPreview}</strong></span>
+          </span>
+        </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4 text-xs">

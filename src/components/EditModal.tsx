@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Check, Users } from 'lucide-react';
 import { CarUnloadingRecord, PaymentStatus } from '../types';
 import { formatRupiah } from '../utils/formatters';
+import { DEFAULT_WORKER_NAMES } from './SimpleAddForm';
 
 interface EditModalProps {
   record: CarUnloadingRecord | null;
@@ -124,15 +125,24 @@ export const EditModal: React.FC<EditModalProps> = ({
               <label className="block font-bold text-slate-700 mb-1">
                 Total Upah Per Mobil (Rp)
               </label>
-              <input
-                type="number"
-                min="0"
-                step="5000"
-                required
-                value={wagePerCar}
-                onChange={e => setWagePerCar(parseFloat(e.target.value) || 0)}
-                className="w-full px-3 py-2 text-sm font-black text-emerald-800 bg-slate-50 border border-slate-300 rounded-xl"
-              />
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-black text-slate-400">
+                  Rp
+                </span>
+                <input
+                  type="number"
+                  min="0"
+                  step="10000"
+                  required
+                  value={wagePerCar}
+                  onChange={e => setWagePerCar(parseFloat(e.target.value) || 0)}
+                  className="w-full pl-9 pr-3 py-2 text-sm font-black text-emerald-800 bg-slate-50 border border-slate-300 rounded-xl"
+                />
+              </div>
+              <div className="mt-1 flex items-center justify-between text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                <span>Format:</span>
+                <span>{formatRupiah(wagePerCar)}</span>
+              </div>
             </div>
           </div>
 
@@ -158,7 +168,7 @@ export const EditModal: React.FC<EditModalProps> = ({
                   <button
                     type="button"
                     onClick={() => handleRemoveWorker(name)}
-                    className="text-slate-400 hover:text-rose-600 ml-1"
+                    className="text-slate-400 hover:text-rose-600 ml-1 cursor-pointer"
                   >
                     <X className="w-3 h-3" />
                   </button>
@@ -166,10 +176,10 @@ export const EditModal: React.FC<EditModalProps> = ({
               ))}
             </div>
 
-            <div className="flex items-center space-x-1">
+            <div className="flex items-center space-x-1 mb-2">
               <input
                 type="text"
-                placeholder="+ Tambah nama..."
+                placeholder="+ Tambah nama pembungkar..."
                 value={newWorkerInput}
                 onChange={e => setNewWorkerInput(e.target.value)}
                 onKeyDown={e => {
@@ -183,10 +193,38 @@ export const EditModal: React.FC<EditModalProps> = ({
               <button
                 type="button"
                 onClick={() => handleAddWorker(newWorkerInput)}
-                className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold"
+                className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold cursor-pointer"
               >
                 Tambah
               </button>
+            </div>
+
+            {/* Quick click 8 names */}
+            <div className="flex flex-wrap items-center gap-1 pt-1.5 border-t border-emerald-200/60">
+              <span className="text-[10px] font-bold text-slate-600 mr-1">Pilih cepat:</span>
+              {DEFAULT_WORKER_NAMES.map(name => {
+                const isSelected = workerNames.includes(name);
+                return (
+                  <button
+                    key={name}
+                    type="button"
+                    onClick={() => {
+                      if (isSelected) {
+                        handleRemoveWorker(name);
+                      } else {
+                        handleAddWorker(name);
+                      }
+                    }}
+                    className={`px-2 py-0.5 rounded text-[10px] font-bold border transition-colors cursor-pointer ${
+                      isSelected
+                        ? 'bg-emerald-700 text-white border-emerald-700'
+                        : 'bg-white text-slate-700 border-slate-300 hover:bg-emerald-100'
+                    }`}
+                  >
+                    {isSelected ? `✓ ${name}` : `+ ${name}`}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
