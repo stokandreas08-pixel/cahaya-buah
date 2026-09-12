@@ -12,7 +12,9 @@ import {
   EyeOff, 
   Upload, 
   RefreshCw,
-  Sparkles
+  Sparkles,
+  Activity,
+  History
 } from 'lucide-react';
 import { 
   AdminUser, 
@@ -21,6 +23,13 @@ import {
   getAdminPassword, 
   DEFAULT_ADMIN_EMAIL 
 } from '../services/authService';
+import { 
+  subscribeToUserLogs, 
+  clearAllUserLogs, 
+  getCachedUserLogs 
+} from '../services/activityLogService';
+import { UserLog } from '../types';
+import { UserLogsTable } from './UserLogsTable';
 
 interface AdminSettingsModalProps {
   isOpen: boolean;
@@ -66,7 +75,11 @@ export const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
   onPasswordChanged,
 }) => {
   const activeUser = adminUser || currentUser || null;
-  const [activeTab, setActiveTab] = useState<'profil' | 'password'>('profil');
+  const [activeTab, setActiveTab] = useState<'profil' | 'password' | 'logs'>('profil');
+
+  // Logs state
+  const [logs, setLogs] = useState<UserLog[]>([]);
+  const [isLoadingLogs, setIsLoadingLogs] = useState(false);
 
   // Profile Form state
   const [name, setName] = useState(activeUser?.name || 'Admin Keuangan');
@@ -87,6 +100,30 @@ export const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
   const [showConfirmLogout, setShowConfirmLogout] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Real-time subscription to user logs when modal is open
+  useEffect(() => {
+    if (!isOpen) return;
+    setIsLoadingLogs(true);
+    const unsubscribe = subscribeToUserLogs((newLogs) => {
+      setLogs(newLogs);
+      setIsLoadingLogs(false);
+    });
+    return () => unsubscribe();
+  }, [isOpen]);
+
+  const handleRefreshLogs = () => {
+    setIsLoadingLogs(true);
+    const cached = getCachedUserLogs();
+    setLogs(cached);
+    setTimeout(() => setIsLoadingLogs(false), 250);
+  };
+
+  const handleClearLogs = async () => {
+    await clearAllUserLogs();
+    setLogs([]);
+    setSuccessMsg('Semua data log aktivitas berhasil dibersihkan');
+  };
 
   // Synchronize state whenever modal opens or activeUser changes
   useEffect(() => {
@@ -192,30 +229,37 @@ export const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-fade-in">
-      <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh]">
+    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 animate-fade-in">
+      <div
+        className={`bg-white rounded-2xl w-full max-w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh] sm:max-h-[90vh] transition-all duration-200 ${
+          activeTab === 'logs' ? 'sm:max-w-4xl lg:max-w-5xl' : 'sm:max-w-md'
+        }`}
+      >
         {/* Header */}
-        <div className="px-5 py-4 border-b border-slate-100 bg-slate-900 text-white flex items-center justify-between">
-          <div className="flex items-center space-x-2.5">
-            <div className="w-8 h-8 rounded-xl bg-amber-400/20 border border-amber-400/40 text-amber-400 flex items-center justify-center font-bold">
-              <ShieldCheck className="w-4 h-4" />
+        <div className="px-3.5 sm:px-5 py-3 sm:py-3.5 border-b border-slate-100 bg-slate-900 text-white flex items-center justify-between">
+          <div className="flex items-center space-x-2 sm:space-x-2.5 min-w-0">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-amber-400/20 border border-amber-400/40 text-amber-400 flex items-center justify-center font-bold shrink-0">
+              <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
-            <div>
-              <h2 className="text-sm font-bold">Pengaturan Akun Admin</h2>
-              <p className="text-[11px] text-slate-300">Cahaya Buah • {DEFAULT_ADMIN_EMAIL}</p>
+            <div className="min-w-0">
+              <h2 className="text-xs sm:text-sm font-bold truncate">
+                <span className="sm:hidden">Pengaturan Admin</span>
+                <span className="hidden sm:inline">Pengaturan Akun & Log Admin</span>
+              </h2>
+              <p className="text-[10px] sm:text-[11px] text-slate-300 truncate">Cahaya Buah • {DEFAULT_ADMIN_EMAIL}</p>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="text-slate-400 hover:text-white p-1 rounded-lg transition-colors cursor-pointer"
+            className="text-slate-400 hover:text-white p-1 rounded-lg transition-colors cursor-pointer shrink-0 ml-1.5"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Tab Navigation */}
-        <div className="flex border-b border-slate-200 bg-slate-50 text-xs font-bold">
+        {/* Tab Navigation - Perfectly balanced 3-column grid for mobile & desktop */}
+        <div className="grid grid-cols-3 border-b border-slate-200 bg-slate-50 text-[11px] sm:text-xs font-bold">
           <button
             type="button"
             onClick={() => {
@@ -223,14 +267,16 @@ export const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
               setErrorMsg('');
               setSuccessMsg('');
             }}
-            className={`flex-1 py-3 px-4 text-center border-b-2 flex items-center justify-center space-x-2 transition-colors cursor-pointer ${
+            className={`py-2.5 sm:py-3 px-1 sm:px-3 text-center border-b-2 flex items-center justify-center space-x-1 sm:space-x-1.5 transition-colors cursor-pointer min-w-0 ${
               activeTab === 'profil'
-                ? 'border-slate-900 text-slate-900 bg-white'
+                ? 'border-slate-900 text-slate-900 bg-white shadow-2xs font-black'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
-            <User className="w-3.5 h-3.5" />
-            <span>Foto & Profil Admin</span>
+            <User className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">
+              <span className="hidden sm:inline">Foto & </span>Profil
+            </span>
           </button>
 
           <button
@@ -240,19 +286,45 @@ export const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
               setErrorMsg('');
               setSuccessMsg('');
             }}
-            className={`flex-1 py-3 px-4 text-center border-b-2 flex items-center justify-center space-x-2 transition-colors cursor-pointer ${
+            className={`py-2.5 sm:py-3 px-1 sm:px-3 text-center border-b-2 flex items-center justify-center space-x-1 sm:space-x-1.5 transition-colors cursor-pointer min-w-0 ${
               activeTab === 'password'
-                ? 'border-slate-900 text-slate-900 bg-white'
+                ? 'border-slate-900 text-slate-900 bg-white shadow-2xs font-black'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
-            <KeyRound className="w-3.5 h-3.5" />
-            <span>Ganti Kata Sandi</span>
+            <KeyRound className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">
+              <span className="hidden sm:inline">Ganti </span>Sandi
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('logs');
+              setErrorMsg('');
+              setSuccessMsg('');
+            }}
+            className={`py-2.5 sm:py-3 px-1 sm:px-3 text-center border-b-2 flex items-center justify-center space-x-1 sm:space-x-1.5 transition-colors cursor-pointer min-w-0 ${
+              activeTab === 'logs'
+                ? 'border-slate-900 text-slate-900 bg-white shadow-2xs font-black'
+                : 'border-transparent text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <Activity className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+            <span className="truncate">
+              Log<span className="hidden sm:inline"> Aktivitas</span>
+            </span>
+            {logs.length > 0 && (
+              <span className="ml-0.5 sm:ml-1 px-1 sm:px-1.5 py-0.2 bg-blue-100 text-blue-800 text-[9px] sm:text-[10px] font-bold rounded-full shrink-0">
+                {logs.length > 99 ? '99+' : logs.length}
+              </span>
+            )}
           </button>
         </div>
 
         {/* Alerts */}
-        <div className="px-5 pt-3">
+        <div className="px-3 sm:px-5 pt-2 sm:pt-3">
           {errorMsg && (
             <div className="p-2.5 bg-rose-50 border border-rose-200 rounded-xl flex items-center space-x-2 text-rose-700 text-xs">
               <AlertCircle className="w-4 h-4 shrink-0" />
@@ -268,8 +340,15 @@ export const AdminSettingsModal: React.FC<AdminSettingsModalProps> = ({
         </div>
 
         {/* Body content */}
-        <div className="p-5 overflow-y-auto flex-1 space-y-4 text-xs">
-          {activeTab === 'profil' ? (
+        <div className="p-3 sm:p-5 overflow-y-auto flex-1 space-y-3.5 text-xs">
+          {activeTab === 'logs' ? (
+            <UserLogsTable
+              logs={logs}
+              isLoading={isLoadingLogs}
+              onRefresh={handleRefreshLogs}
+              onClearLogs={handleClearLogs}
+            />
+          ) : activeTab === 'profil' ? (
             <form onSubmit={handleSaveProfile} className="space-y-4">
               {/* Avatar Section */}
               <div className="flex flex-col items-center justify-center pb-2">

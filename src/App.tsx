@@ -48,6 +48,7 @@ import {
   subscribeToAuth, 
   logoutAdmin 
 } from './services/authService';
+import { recordUserActivity } from './services/activityLogService';
 
 const STORAGE_KEY = 'car_bungkaran_records_v5';
 const ORDERS_STORAGE_KEY = 'fruit_orders_records_v2';
@@ -141,6 +142,11 @@ export default function App() {
     return () => unsub();
   }, []);
 
+  // Record initial client web visit
+  useEffect(() => {
+    recordUserActivity('Mengakses Aplikasi Pembukuan Cahaya Buah');
+  }, []);
+
   // 1. Subscribe to real-time bungkaran records (propagates immediately to Viewer & Admin)
   useEffect(() => {
     const unsubscribe = subscribeToRecords(
@@ -231,6 +237,12 @@ export default function App() {
     setRecords(prev => [newRecord, ...prev]);
     showToast(`Bungkaran ${newRecord.packagingCode} berhasil ditambahkan!`);
 
+    recordUserActivity(`Mencatat Bungkaran Mobil Baru (${newRecord.packagingCode} - ${newRecord.packageCount} Koli)`, {
+      userId: adminUser?.email,
+      namaPengguna: adminUser?.name || 'Admin Keuangan',
+      metadata: { packagingCode: newRecord.packagingCode, count: newRecord.packageCount },
+    });
+
     try {
       await addRecordToCloud(newRecord);
     } catch (err) {
@@ -248,6 +260,11 @@ export default function App() {
     setEditingRecord(null);
     showToast(`Bungkaran ${updated.packagingCode} berhasil diperbarui!`);
 
+    recordUserActivity(`Memperbarui Data Bungkaran Mobil (${updated.packagingCode})`, {
+      userId: adminUser?.email,
+      namaPengguna: adminUser?.name || 'Admin Keuangan',
+    });
+
     try {
       await updateRecordInCloud(updated);
     } catch (err) {
@@ -261,8 +278,16 @@ export default function App() {
       return;
     }
 
+    const target = records.find(r => r.id === id);
+    const code = target ? target.packagingCode : id;
+
     setRecords(prev => prev.filter(r => r.id !== id));
     showToast('Data bungkaran berhasil dihapus!');
+
+    recordUserActivity(`Menghapus Data Bungkaran Mobil (${code})`, {
+      userId: adminUser?.email,
+      namaPengguna: adminUser?.name || 'Admin Keuangan',
+    });
 
     try {
       await deleteRecordFromCloud(id);
@@ -285,6 +310,11 @@ export default function App() {
     setRecords(prev =>
       prev.map(r => (r.id === id ? { ...r, paymentStatus: newStatus } : r))
     );
+
+    recordUserActivity(`Mengubah Status Bayar Bungkaran (${target.packagingCode}) ke ${newStatus.toUpperCase()}`, {
+      userId: adminUser?.email,
+      namaPengguna: adminUser?.name || 'Admin Keuangan',
+    });
 
     try {
       await togglePaymentStatusInCloud(id, target.paymentStatus);
@@ -312,6 +342,12 @@ export default function App() {
     setStocks(updatedStocks);
 
     showToast(`Pesanan ${order.orderNumber} (${order.totalPeti} Peti) berhasil disimpan!`);
+
+    recordUserActivity(`Membuat Pesanan Buah (${order.orderNumber} - ${order.totalPeti} Peti - ${order.customerName})`, {
+      userId: adminUser?.email,
+      namaPengguna: adminUser?.name || 'Admin Keuangan',
+      metadata: { orderNumber: order.orderNumber, customer: order.customerName, totalPeti: order.totalPeti },
+    });
 
     try {
       await addFruitOrderToCloud(order);
@@ -353,6 +389,11 @@ export default function App() {
     setStocks(updatedStocks);
     showToast(`Pesanan ${updatedOrder.orderNumber} berhasil diperbarui!`);
 
+    recordUserActivity(`Memperbarui Pesanan Buah (${updatedOrder.orderNumber} - ${updatedOrder.customerName})`, {
+      userId: adminUser?.email,
+      namaPengguna: adminUser?.name || 'Admin Keuangan',
+    });
+
     try {
       await updateFruitOrderInCloud(updatedOrder);
       await saveAllStocksToCloud(updatedStocks);
@@ -367,8 +408,16 @@ export default function App() {
       return;
     }
 
+    const target = fruitOrders.find(o => o.id === id);
+    const orderNo = target ? target.orderNumber : id;
+
     setFruitOrders(prev => prev.filter(o => o.id !== id));
     showToast('Pesanan buah berhasil dihapus!');
+
+    recordUserActivity(`Menghapus Pesanan Buah Peti (${orderNo})`, {
+      userId: adminUser?.email,
+      namaPengguna: adminUser?.name || 'Admin Keuangan',
+    });
 
     try {
       await deleteFruitOrderFromCloud(id);
@@ -383,10 +432,18 @@ export default function App() {
       return;
     }
 
+    const target = fruitOrders.find(o => o.id === id);
+    const orderNo = target ? target.orderNumber : id;
+
     setFruitOrders(prev =>
       prev.map(o => (o.id === id ? { ...o, status } : o))
     );
     showToast(`Status pesanan diubah ke: ${status.toUpperCase()}`);
+
+    recordUserActivity(`Mengubah Status Pesanan (${orderNo}) menjadi ${status.toUpperCase()}`, {
+      userId: adminUser?.email,
+      namaPengguna: adminUser?.name || 'Admin Keuangan',
+    });
 
     try {
       await updateFruitOrderStatusInCloud(id, status);
@@ -405,6 +462,11 @@ export default function App() {
     setStocks(newStocks);
     showToast('Stok peti buah di gudang berhasil diperbarui!');
 
+    recordUserActivity('Memperbarui Inventaris Stok Peti Gudang', {
+      userId: adminUser?.email,
+      namaPengguna: adminUser?.name || 'Admin Keuangan',
+    });
+
     try {
       await saveAllStocksToCloud(newStocks);
     } catch (err) {
@@ -414,13 +476,38 @@ export default function App() {
 
   // Admin Logout
   const handleLogout = async () => {
+    recordUserActivity('Keluar Sesi Administrator Keuangan (Logout)', {
+      userId: adminUser?.email,
+      namaPengguna: adminUser?.name || 'Admin Keuangan',
+      force: true,
+    });
     await logoutAdmin();
     setAdminUser(null);
     showToast('Anda telah keluar dari mode Admin.');
   };
 
+  // Handle tab switch with automatic activity tracking
+  const handleTabChange = (tab: MainTab) => {
+    setActiveTab(tab);
+    recordUserActivity(
+      tab === 'bungkaran' ? 'Melihat Menu Bungkaran Mobil' : 'Melihat Menu Pesanan Buah Peti',
+      {
+        userId: adminUser?.email,
+        namaPengguna: adminUser?.name || 'Klien (Tamu)',
+      }
+    );
+  };
+
   // Export to CSV
   const handleExportCSV = () => {
+    recordUserActivity(
+      activeTab === 'pesanan_peti' ? 'Mengekspor Rekap Pesanan Buah ke CSV' : 'Mengekspor Rekap Bungkaran ke CSV',
+      {
+        userId: adminUser?.email,
+        namaPengguna: adminUser?.name || 'Klien (Tamu)',
+      }
+    );
+
     if (activeTab === 'pesanan_peti') {
       // Export fruit orders without price
       const headers = [
@@ -537,8 +624,8 @@ export default function App() {
       {/* Main Navbar */}
       <Navbar
         activeTab={activeTab}
-        onSelectTab={(tab) => setActiveTab(tab)}
-        onTabChange={(tab) => setActiveTab(tab)}
+        onSelectTab={handleTabChange}
+        onTabChange={handleTabChange}
         onOpenNew={() => {
           if (activeTab === 'bungkaran') {
             if (!isAdmin) {
@@ -610,7 +697,13 @@ export default function App() {
               onEdit={record => setEditingRecord(record)}
               onDelete={handleDelete}
               onToggleStatus={handleToggleStatus}
-              onPrint={record => setPrintingRecord(record)}
+              onPrint={record => {
+                setPrintingRecord(record);
+                recordUserActivity(`Mencetak Slip Bungkaran Mobil (${record.packagingCode})`, {
+                  userId: adminUser?.email,
+                  namaPengguna: adminUser?.name || 'Klien (Tamu)',
+                });
+              }}
               isAdmin={isAdmin}
               onPromptLogin={() => setIsLoginModalOpen(true)}
             />
@@ -666,7 +759,13 @@ export default function App() {
 
               <FruitOrderList
                 orders={fruitOrders}
-                onPrint={order => setPrintingFruitOrder(order)}
+                onPrint={order => {
+                  setPrintingFruitOrder(order);
+                  recordUserActivity(`Mencetak Nota / Surat Jalan (${order.orderNumber} - ${order.customerName})`, {
+                    userId: adminUser?.email,
+                    namaPengguna: adminUser?.name || 'Klien (Tamu)',
+                  });
+                }}
                 onEdit={order => setEditingFruitOrder(order)}
                 onDelete={handleDeleteFruitOrder}
                 onUpdateStatus={handleUpdateFruitOrderStatus}
@@ -690,6 +789,11 @@ export default function App() {
         onLoginSuccess={(user) => {
           setAdminUser(user);
           showToast(`Berhasil masuk sebagai Admin (${user.name || user.email})!`);
+          recordUserActivity('Login Berhasil sebagai Administrator Keuangan', {
+            userId: user.email,
+            namaPengguna: user.name || 'Admin Keuangan',
+            force: true,
+          });
         }}
       />
 
@@ -759,7 +863,7 @@ export default function App() {
       {/* Mobile Bottom Navigation */}
       <MobileBottomNav
         activeTab={activeTab}
-        onSelectTab={setActiveTab}
+        onSelectTab={handleTabChange}
         onOpenNew={() => {
           if (!isAdmin) {
             setIsLoginModalOpen(true);

@@ -55,3 +55,15 @@ export interface FruitCatalogItem {
 }
 
 export type StockMap = Record<string, number>; // e.g. "jeruk_gina__AB": 50
+
+export interface UserLog {
+  id: string;
+  user_id: string;
+  nama_pengguna: string;
+  ip_address: string;
+  perangkat: string;
+  lokasi: string;
+  aktivitas: string;
+  timestamp: string; // ISO 8601 string
+  metadata?: Record<string, any>;
+}

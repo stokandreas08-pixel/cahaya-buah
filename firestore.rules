@@ -15,5 +15,8 @@ service cloud.firestore {
     match /admins/{adminId} {
       allow read, write: if true;
     }
+    match /user_logs/{logId} {
+      allow read, write: if true;
+    }
   }
 }
